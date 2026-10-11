@@ -61,7 +61,7 @@
 发布包不包含项目虚拟环境。运行插件前请只在当前 AGH 启动终端设置项目专用解释器，例如：
 
 ```powershell
-$env:PYTHON_EXEC = 'F:\Codex\黑客松\mechanical-agent\.venv\Scripts\python.exe'
+$env:PYTHON_EXEC = 'F:\hackathon\黑客松\mechanical-agent\.venv\Scripts\python.exe'
 ```
 
 这不会修改或升级任何全局 Python 环境。

@@ -46,7 +46,7 @@ $env:PYTHON_TOOL_TIMEOUT_MS = '10000'
 发布 ZIP 为了避免携带本地环境，不包含 `.venv`。现场运行前请在启动 AGH 的同一个 PowerShell 窗口设置项目专用解释器：
 
 ```powershell
-$env:PYTHON_EXEC = 'F:\Codex\黑客松\mechanical-agent\.venv\Scripts\python.exe'
+$env:PYTHON_EXEC = 'F:\hackathon\黑客松\mechanical-agent\.venv\Scripts\python.exe'
 ```
 
 不要把全局 Python 路径或 API key 写入插件文件。
