@@ -1,0 +1,97 @@
+{
+  "case_results": [
+    {
+      "id": "hollow-feasible",
+      "ok": true,
+      "status": "feasible",
+      "failed_constraints": [],
+      "metrics": {
+        "max_stress_mpa": 6.8245346503807065,
+        "max_deflection_mm": 0.02559200493892765,
+        "mass_kg": 2.3898456335617912,
+        "safety_factor": 34.434582288609306,
+        "fixed_end_moment_nm": 150.0,
+        "cross_section_area_mm2": 1014.7964473723105,
+        "second_moment_mm4": 879180.8243900249,
+        "section_modulus_mm3": 21979.520609750623,
+        "local_buckling_factor": 875.6059025573578
+      },
+      "stability_status": "passed"
+    },
+    {
+      "id": "hollow-initial-failure",
+      "ok": true,
+      "status": "constraint_failed",
+      "failed_constraints": [
+        "deflection",
+        "safety_factor"
+      ],
+      "metrics": {
+        "max_stress_mpa": 192.68271656704007,
+        "max_deflection_mm": 3.2113786094506684,
+        "mass_kg": 0.6806922534960193,
+        "safety_factor": 1.2196215840575222,
+        "fixed_end_moment_nm": 500.0,
+        "cross_section_area_mm2": 173.42477796076923,
+        "second_moment_mm4": 64873.48851369799,
+        "section_modulus_mm3": 2594.9395405479195,
+        "local_buckling_factor": 2.8954717485136054
+      },
+      "stability_status": "passed"
+    },
+    {
+      "id": "hollow-invalid-geometry",
+      "ok": false,
+      "error_type": "GeometryError",
+      "message": "\u5916\u90e8\u5c3a\u5bf8\u5fc5\u987b\u4e25\u683c\u5927\u4e8e\u4e24\u500d\u58c1\u539a\uff0c\u5185\u8154\u5c3a\u5bf8\u5fc5\u987b\u4e3a\u6b63\u6570"
+    },
+    {
+      "id": "hollow-material-screening",
+      "ok": true,
+      "rows": [
+        {
+          "material_id": "steel_s235",
+          "status": "feasible",
+          "screening_status": "passed",
+          "yield_safety_factor": 34.434582288609306,
+          "local_buckling_factor": 875.6059025573578
+        },
+        {
+          "material_id": "aluminum_6061_t6",
+          "status": "feasible",
+          "screening_status": "passed",
+          "yield_safety_factor": 40.44231792194115,
+          "local_buckling_factor": 308.0440718462786
+        },
+        {
+          "material_id": "steel_s355",
+          "status": "feasible",
+          "screening_status": "passed",
+          "yield_safety_factor": 52.018198776409804,
+          "local_buckling_factor": 919.3861976852257
+        },
+        {
+          "material_id": "stainless_steel_304",
+          "status": "feasible",
+          "screening_status": "passed",
+          "yield_safety_factor": 31.50397954064256,
+          "local_buckling_factor": 839.5166757623581
+        },
+        {
+          "material_id": "aluminum_7075_t6",
+          "status": "feasible",
+          "screening_status": "passed",
+          "yield_safety_factor": 73.70465911136375,
+          "local_buckling_factor": 320.5625537210185
+        },
+        {
+          "material_id": "titanium_ti6al4v",
+          "status": "feasible",
+          "screening_status": "passed",
+          "yield_safety_factor": 128.94652091053698,
+          "local_buckling_factor": 513.5422678160351
+        }
+      ]
+    }
+  ]
+}

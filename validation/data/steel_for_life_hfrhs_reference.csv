@@ -1,0 +1,4 @@
+source_record,section_type,standard_basis,height_mm,width_mm,thickness_mm,mass_kg_per_m,area_cm2,major_inertia_cm4,minor_inertia_cm4,major_modulus_cm3,minor_modulus_cm3
+SCI-HFRHS-50x30x3.2,hot_finished_rhs,BS EN 10210-2:2006,50,30,3.2,3.61,4.60,14.2,6.20,5.68,4.13
+SCI-HFRHS-60x40x3.2,hot_finished_rhs,BS EN 10210-2:2006,60,40,3.2,4.62,5.88,27.8,14.6,9.27,7.29
+SCI-HFRHS-80x40x3.2,hot_finished_rhs,BS EN 10210-2:2006,80,40,3.2,5.62,7.16,57.2,18.9,14.3,9.46

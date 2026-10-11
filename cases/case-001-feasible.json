@@ -1,0 +1,12 @@
+{
+  "case_id": "case-001-feasible",
+  "description": "悬臂支架正常可行案例（合成演示数据）",
+  "load_n": 1000,
+  "length_mm": 300,
+  "width_mm": 50,
+  "height_mm": 80,
+  "material_id": "steel_s235",
+  "max_deflection_mm": 2.0,
+  "min_safety_factor": 2.0,
+  "max_mass_kg": 10.0
+}

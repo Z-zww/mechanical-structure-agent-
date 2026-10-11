@@ -1,0 +1,95 @@
+{
+  "ok": true,
+  "validation_type": "public_reference_property_comparison",
+  "source": "SCI / Steel for Life Interactive Blue Book, hot-finished RHS, BS EN 10210-2:2006",
+  "source_file": "validation/sources/steel_for_life_hfrhs_table_2026-10-11.html",
+  "not_experimental": true,
+  "rounded_radius_validation": false,
+  "limitations": [
+    "公开表未提供圆角半径，因此未将其规格反推为当前圆角几何工具输入",
+    "本结果验证表格属性驱动的悬臂梁公式链路，不验证制造圆角、焊缝、残余应力或规范完整验算"
+  ],
+  "cases": [
+    {
+      "source_record": "SCI-HFRHS-50x30x3.2",
+      "input": {
+        "load_n": 500.0,
+        "length_mm": 400.0,
+        "material_reference": "S235工程参考参数（E=200 GPa，rho=7850 kg/m3，fy=235 MPa）",
+        "major_axis": "表格第一惯性矩/截面模量列，按 h 为弯曲高度"
+      },
+      "tabulated_properties": {
+        "area_mm2": 459.99999999999994,
+        "major_inertia_mm4": 142000.0,
+        "major_modulus_mm3": 5680.0,
+        "mass_kg_per_m": 3.61
+      },
+      "derived_response": {
+        "max_stress_mpa": 35.2112676056338,
+        "max_deflection_mm": 0.3755868544600939,
+        "mass_kg": 1.444,
+        "yield_safety_factor": 6.674
+      },
+      "internal_consistency": {
+        "mass_per_m_from_area_kg_per_m": 3.6109999999999993,
+        "mass_per_m_relative_error": 0.000277008310249154,
+        "mass_per_m_consistent_with_density": true,
+        "section_modulus_consistent_with_I_over_H2": true
+      }
+    },
+    {
+      "source_record": "SCI-HFRHS-60x40x3.2",
+      "input": {
+        "load_n": 500.0,
+        "length_mm": 400.0,
+        "material_reference": "S235工程参考参数（E=200 GPa，rho=7850 kg/m3，fy=235 MPa）",
+        "major_axis": "表格第一惯性矩/截面模量列，按 h 为弯曲高度"
+      },
+      "tabulated_properties": {
+        "area_mm2": 588.0,
+        "major_inertia_mm4": 278000.0,
+        "major_modulus_mm3": 9270.0,
+        "mass_kg_per_m": 4.62
+      },
+      "derived_response": {
+        "max_stress_mpa": 21.57497303128371,
+        "max_deflection_mm": 0.19184652278177458,
+        "mass_kg": 1.848,
+        "yield_safety_factor": 10.892249999999999
+      },
+      "internal_consistency": {
+        "mass_per_m_from_area_kg_per_m": 4.6158,
+        "mass_per_m_relative_error": 0.0009090909090909051,
+        "mass_per_m_consistent_with_density": true,
+        "section_modulus_consistent_with_I_over_H2": true
+      }
+    },
+    {
+      "source_record": "SCI-HFRHS-80x40x3.2",
+      "input": {
+        "load_n": 500.0,
+        "length_mm": 400.0,
+        "material_reference": "S235工程参考参数（E=200 GPa，rho=7850 kg/m3，fy=235 MPa）",
+        "major_axis": "表格第一惯性矩/截面模量列，按 h 为弯曲高度"
+      },
+      "tabulated_properties": {
+        "area_mm2": 716.0,
+        "major_inertia_mm4": 572000.0,
+        "major_modulus_mm3": 14300.0,
+        "mass_kg_per_m": 5.62
+      },
+      "derived_response": {
+        "max_stress_mpa": 13.986013986013987,
+        "max_deflection_mm": 0.09324009324009325,
+        "mass_kg": 2.248,
+        "yield_safety_factor": 16.8025
+      },
+      "internal_consistency": {
+        "mass_per_m_from_area_kg_per_m": 5.6206,
+        "mass_per_m_relative_error": 0.00010676156583620815,
+        "mass_per_m_consistent_with_density": true,
+        "section_modulus_consistent_with_I_over_H2": true
+      }
+    }
+  ]
+}

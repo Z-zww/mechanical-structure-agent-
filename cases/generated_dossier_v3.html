@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>悬臂支架确定性工程设计验证</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; margin: 2rem auto; max-width: 900px; padding: 0 1rem; color: #1f2937; }
+    h1 { border-bottom: 2px solid #2563eb; padding-bottom: .4rem; }
+    table { border-collapse: collapse; margin: .75rem 0 1.5rem; width: 100%; }
+    th, td { border: 1px solid #d1d5db; padding: .5rem .75rem; text-align: left; }
+    th { background: #f3f4f6; width: 35%; }
+    code { white-space: pre-wrap; word-break: break-word; }
+    .status { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>悬臂支架确定性工程设计验证</h1>
+  <p>报告版本：<code>cantilever-design-dossier-v3</code></p>
+  <p>最终状态：<span class="status"><code>completed_feasible_robust</code></span></p>
+  <p>状态定义：本报告的组合状态表示最终计算状态为 <code>feasible</code> 且制造公差验证状态为 <code>robust_feasible</code>。</p>
+  <p>生成方式：团队开发的确定性模板工具</p>
+  
+  <h2>1. 设计任务</h2>
+  <p>基于本次完整闭环生成中文HTML报告：覆盖非法几何、Agnes失败分析与重规划、候选搜索、最终方案、稳定性筛查、敏感性分析、制造公差验证和公开工程参考对比。</p>
+  <h2>2. 最终方案输入</h2>
+  <table><tbody><tr><th>截面类型</th><td>实际圆角空心矩形截面</td></tr><tr><th>载荷</th><td>500 N</td></tr><tr><th>长度</th><td>400 mm</td></tr><tr><th>外宽</th><td>40 mm</td></tr><tr><th>外高</th><td>50 mm</td></tr><tr><th>壁厚</th><td>2 mm</td></tr><tr><th>外圆角半径</th><td>5 mm</td></tr><tr><th>内宽</th><td>36 mm</td></tr><tr><th>内高</th><td>46 mm</td></tr><tr><th>内圆角半径</th><td>3 mm</td></tr><tr><th>材料</th><td>S235钢（工程参考参数）</td></tr></tbody></table>
+  <h2>3. 计算结果</h2>
+  <table><tbody><tr><th>最大应力</th><td>43.0095 MPa</td></tr><tr><th>最大挠度</th><td>0.458768 mm</td></tr><tr><th>质量</th><td>1.03703 kg</td></tr><tr><th>屈服安全系数</th><td>5.46391</td></tr><tr><th>局部屈曲安全系数</th><td>74.7172</td></tr></tbody></table>
+  
+  <h2>4. 局部屈曲筛查</h2>
+  <ul>
+    <li>筛查状态：<code>passed</code></li>
+    <li>方法版本：<code>elastic-plate-local-buckling-screening-v1</code></li>
+    <li>控制板件：<code>flange</code></li>
+    <li>翼缘屈曲安全系数：<code>74.7172</code>，k=4</li>
+    <li>腹板屈曲安全系数：<code>251.12</code>，k=23.9</li>
+    <li>该结果是弹性局部屈曲工程筛查，不等同于材料专用规范的完整验算。</li>
+  </ul>
+  <h2>5. 约束与公差验证</h2>
+  <ul><li>计算失败约束：<code>[]</code></li><li>候选搜索结果：<code>约束满足</code></li><li>敏感性分析结果：<code>分析已完成</code></li><li>公差验证结果：<code>公差工况全部满足</code></li><li>公差工况数：<code>64</code></li><li>公差通过数：<code>64</code></li><li>公差非法几何数：<code>0</code></li></ul>
+  <h2>6. 失败与重规划轨迹</h2>
+  <code>[{&quot;decision&quot;: &quot;收窄壁厚与外高搜索范围后重试&quot;, &quot;failure_code&quot;: &quot;INVALID_GEOMETRY&quot;, &quot;stage&quot;: &quot;初始方案未满足约束&quot;}, {&quot;stage&quot;: &quot;候选方案搜索&quot;, &quot;status&quot;: &quot;feasible&quot;}, {&quot;stage&quot;: &quot;最终方案计算&quot;, &quot;status&quot;: &quot;feasible&quot;}]</code>
+  <h2>7. 证据和限制</h2>
+  <p>数值来自本项目确定性工具链；公开型材数据仅用于工程参考对比，不代表真实实验或实物测试。</p>
+  <ul>
+    <li>本报告不代表真实实验或实物测试结果。</li>
+    <li>公开材料参数只能作为工程参考数据。</li>
+    <li>局部屈曲结果是工程筛查，不代表完整规范验算或真实实验结果。</li><li>弹性临界应力若高于材料屈服强度，不得外推为实际允许应力或实际承载能力；屈服安全系数与局部屈曲筛查系数是不同指标。</li><li>未覆盖初始缺陷、残余应力、圆角板件耦合、屈曲后强度、整体屈曲、疲劳、连接和焊缝失效。</li>
+  </ul>
+  <h2>8. 规范依据</h2>
+  <ul>
+    <li>EN 1993-1-5:2006+A2:2019，Eurocode 3: Design of steel structures — Part 1-5: Plated structural elements</li>
+    <li>本项目仅借用内部板件弹性屈曲系数与应力分布边界进行工程筛查，不声称完成 EN 1993-1-5 的完整材料设计验算。</li>
+  </ul>
+  
+  <h2>9. 公开工程参考对比</h2>
+  <p>来源：<code>SCI / Steel for Life Interactive Blue Book, hot-finished RHS, BS EN 10210-2:2006</code></p>
+  <p>来源文件：<code>validation/sources/steel_for_life_hfrhs_table_2026-10-11.html</code></p>
+  <p>本节仅表示公开工程参考数据对照，不代表真实实验验证。</p>
+  <table><thead><tr><th>公开规格</th><th>面积 (mm²)</th><th>主轴惯性矩 (mm⁴)</th><th>主轴截面模量 (mm³)</th><th>单位质量 (kg/m)</th><th>计算应力 (MPa)</th><th>计算挠度 (mm)</th><th>梁质量 (kg)</th></tr></thead><tbody><tr><td>SCI-HFRHS-50x30x3.2</td><td>460</td><td>142000</td><td>5680</td><td>3.61</td><td>35.2113</td><td>0.375587</td><td>1.444</td></tr><tr><td>SCI-HFRHS-60x40x3.2</td><td>588</td><td>278000</td><td>9270</td><td>4.62</td><td>21.575</td><td>0.191847</td><td>1.848</td></tr><tr><td>SCI-HFRHS-80x40x3.2</td><td>716</td><td>572000</td><td>14300</td><td>5.62</td><td>13.986</td><td>0.0932401</td><td>2.248</td></tr></tbody></table>
+  <ul><li>公开表未提供圆角半径，因此未将其规格反推为当前圆角几何工具输入</li><li>本结果验证表格属性驱动的悬臂梁公式链路，不验证制造圆角、焊缝、残余应力或规范完整验算</li></ul>
+  <h2>10. 数据来源字段</h2>
+  <ul>
+    <li>计算结果、候选搜索、敏感性分析、公差验证和重规划轨迹由调用方以 JSON 结构传入。</li>
+    <li>工具不调用任何大模型，不根据自然语言自行补全缺失工程数据。</li>
+  </ul>
+</body>
+</html>

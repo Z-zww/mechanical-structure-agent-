@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>悬臂支架确定性工程设计验证</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; margin: 2rem auto; max-width: 900px; padding: 0 1rem; color: #1f2937; }
+    h1 { border-bottom: 2px solid #2563eb; padding-bottom: .4rem; }
+    h2 { margin-top: 1.5rem; border-left: 4px solid #2563eb; padding-left: .6rem; }
+    table { border-collapse: collapse; margin: .75rem 0 1.5rem; width: 100%; }
+    th, td { border: 1px solid #d1d5db; padding: .5rem .75rem; text-align: left; }
+    th { background: #f3f4f6; width: 35%; }
+    code { white-space: pre-wrap; word-break: break-word; }
+    .status { font-weight: 600; }
+    .fail { color: #dc2626; }
+    .pass { color: #16a34a; }
+    .warn { color: #d97706; }
+  </style>
+</head>
+<body>
+  <h1>悬臂支架确定性工程设计验证</h1>
+  <p>报告版本：<code>cantilever-design-dossier-v1</code></p>
+  <p>最终状态：<span class="status pass"><code>最终方案（宽20mm × 高45mm，S235钢）满足所有约束，16个公差角点工况全部通过（16/16），设计验证完成。</code></span></p>
+  <p>生成方式：团队开发的确定性模板工具</p>
+
+  <h2>1. 设计任务</h2>
+  <p>在最小安全系数 2.3、最大允许挠度 2 mm、最大质量 20 kg 约束下，设计矩形实心截面悬臂支架（载荷 1000 N，长度 500 mm，材料 S235 钢）。</p>
+
+  <h2>2. 最终方案输入</h2>
+  <table><tbody>
+    <tr><th>载荷</th><td>1100 N（最不利工况，即公称载荷 +10% 波动上限）</td></tr>
+    <tr><th>长度</th><td>500 mm</td></tr>
+    <tr><th>宽度</th><td>20 mm</td></tr>
+    <tr><th>高度</th><td>45 mm</td></tr>
+    <tr><th>材料</th><td>S235钢（工程参考参数：E=200 GPa，σ<sub>y</sub>=235 MPa，ρ=7850 kg/m³）</td></tr>
+  </tbody></table>
+
+  <h2>3. 初始方案计算结果（b=25mm，h=20mm）</h2>
+  <table><tbody>
+    <tr><th>最大应力</th><td>300.0 MPa</td></tr>
+    <tr><th>最大挠度</th><td class="fail">12.50 mm（限值 2 mm，超标 6.25 倍）</td></tr>
+    <tr><th>质量</th><td>1.9625 kg</td></tr>
+    <tr><th>安全系数</th><td class="fail">0.7833（限值 2.3，不满足）</td></tr>
+    <tr><th>状态</th><td class="fail">constraint_failed（挠度 + 安全系数）</td></tr>
+  </tbody></table>
+
+  <h2>4. 候选搜索结果（grid-search）</h2>
+  <p>共评估 25 个候选（宽度 [20,25,30,35,40] × 高度 [20,25,30,35,40]），其中 8 个可行。</p>
+  <table><tbody>
+    <tr><th>宽度 (mm)</th><th>高度 (mm)</th><th>最大应力 (MPa)</th><th>最大挠度 (mm)</th><th>质量 (kg)</th><th>安全系数</th></tr>
+    <tr class="pass"><td>20</td><td>40</td><td>93.75</td><td>1.9531</td><td>3.14</td><td>2.507</td></tr>
+    <tr><td>25</td><td>40</td><td>75.0</td><td>1.5625</td><td>3.925</td><td>3.133</td></tr>
+    <tr><td>30</td><td>35</td><td>81.63</td><td>1.9436</td><td>4.1213</td><td>2.879</td></tr>
+    <tr><td>30</td><td>40</td><td>62.5</td><td>1.3021</td><td>4.71</td><td>3.760</td></tr>
+    <tr><td>35</td><td>35</td><td>69.97</td><td>1.6660</td><td>4.8081</td><td>3.359</td></tr>
+    <tr><td>35</td><td>40</td><td>53.57</td><td>1.1161</td><td>5.495</td><td>4.387</td></tr>
+    <tr><td>40</td><td>35</td><td>61.22</td><td>1.4577</td><td>5.495</td><td>3.838</td></tr>
+    <tr><td>40</td><td>40</td><td>46.87</td><td>0.9766</td><td>6.28</td><td>5.013</td></tr>
+  </tbody></table>
+  <p><strong>最优候选：</strong>宽 20mm × 高 40mm（最小质量 3.14 kg，安全系数 2.507）</p>
+
+  <h2>5. 对最优候选（b=20mm，h=40mm）的公差验证</h2>
+  <p>公差条件：长度 ±2mm，宽度 ±0.5mm，高度 ±0.5mm，载荷波动 ±10%</p>
+  <table><tbody>
+    <tr><th>评估工况数</th><td>16</td></tr>
+    <tr><th>通过工况数</th><td class="fail">9 / 16</td></tr>
+    <tr><th>失败工况数</th><td class="fail">7 / 16</td></tr>
+    <tr><th>最差角点</th><td>P=1100 N，L=502mm，b=19.5mm，h=39.5mm</td></tr>
+    <tr><th>最差角点挠度</th><td class="fail">2.316 mm（限值 2 mm）</td></tr>
+    <tr><th>最差角点安全系数</th><td class="fail">2.158（限值 2.3）</td></tr>
+    <tr><th>状态</th><td class="fail">robustness_failed</td></tr>
+  </tbody></table>
+  <p><strong>结论：</strong>b=20mm × h=40mm 方案在载荷 +10% 且各尺寸均不利偏差叠加时，挠度和安全系数均超限，需要重规划。</p>
+
+  <h2>6. 重规划：扩展高度搜索</h2>
+  <p>将高度范围扩展至 [45, 50] mm，并以最不利载荷 1100 N 进行搜索：</p>
+  <table><tbody>
+    <tr><th>宽度 (mm)</th><th>高度 (mm)</th><th>最大应力 (MPa)</th><th>最大挠度 (mm)</th><th>质量 (kg)</th><th>安全系数</th></tr>
+    <tr class="pass"><td>20</td><td>45</td><td>81.48</td><td>1.509</td><td>3.5325</td><td>2.884</td></tr>
+    <tr><td>20</td><td>50</td><td>66.0</td><td>1.100</td><td>3.925</td><td>3.561</td></tr>
+    <tr><td>25</td><td>45</td><td>65.19</td><td>1.207</td><td>4.416</td><td>3.605</td></tr>
+    <tr><td>25</td><td>50</td><td>52.8</td><td>0.880</td><td>4.906</td><td>4.451</td></tr>
+    <tr><td>30</td><td>45</td><td>54.32</td><td>1.006</td><td>5.299</td><td>4.326</td></tr>
+    <tr><td>30</td><td>50</td><td>44.0</td><td>0.733</td><td>5.888</td><td>5.341</td></tr>
+    <tr><td>35</td><td>45</td><td>46.56</td><td>0.862</td><td>6.182</td><td>5.047</td></tr>
+    <tr><td>35</td><td>50</td><td>37.71</td><td>0.629</td><td>6.869</td><td>6.231</td></tr>
+    <tr><td>40</td><td>45</td><td>40.74</td><td>0.754</td><td>7.065</td><td>5.768</td></tr>
+    <tr><td>40</td><td>50</td><td>33.0</td><td>0.550</td><td>7.85</td><td>7.121</td></tr>
+  </tbody></table>
+  <p><strong>选定最终方案：</strong>宽 20mm × 高 45mm（最小质量 3.5325 kg，安全系数 2.884）</p>
+
+  <h2>7. 最终方案单点计算（P=1100 N）</h2>
+  <table><tbody>
+    <tr><th>最大应力</th><td>81.48 MPa</td></tr>
+    <tr><th>最大挠度</th><td class="pass">1.509 mm（限值 2 mm，满足）</td></tr>
+    <tr><th>质量</th><td class="pass">3.5325 kg（限值 20 kg，满足）</td></tr>
+    <tr><th>安全系数</th><td class="pass">2.884（限值 2.3，满足）</td></tr>
+    <tr><th>状态</th><td class="pass">feasible，无失败约束</td></tr>
+  </tbody></table>
+
+  <h2>8. ±5% 局部敏感性分析（基于 h=40mm 候选）</h2>
+  <table><tbody>
+    <tr><th>参数</th><th>应力灵敏度</th><th>挠度灵敏度</th><th>质量灵敏度</th><th>安全系数灵敏度</th></tr>
+    <tr><td>载荷 (load_n)</td><td>+1.00</td><td>+1.00</td><td>0</td><td>-1.00</td></tr>
+    <tr><td>长度 (length_mm)</td><td>+1.00</td><td>+3.00</td><td>+1.00</td><td>-1.00</td></tr>
+    <tr><td>宽度 (width_mm)</td><td>-1.00</td><td>-1.00</td><td>+1.00</td><td>+1.00</td></tr>
+    <tr><td>高度 (height_mm)</td><td>-2.01</td><td>-3.03</td><td>+1.00</td><td>+2.00</td></tr>
+  </tbody></table>
+  <p><strong>主导参数：</strong>挠度和安全系数最敏感于高度（灵敏度 -3.03 / +2.00），长度次之（挠度灵敏度 +3.00）。高度是唯一同时影响应力、挠度和安全系数的关键尺寸参数。</p>
+
+  <h2>9. 最终方案（b=20mm，h=45mm）公差验证</h2>
+  <p>公差条件：长度 ±2mm，宽度 ±0.5mm，高度 ±0.5mm，载荷波动 ±10%</p>
+  <table><tbody>
+    <tr><th>评估工况数</th><td>16</td></tr>
+    <tr><th>通过工况数</th><td class="pass">16 / 16</td></tr>
+    <tr><th>失败工况数</th><td class="pass">0 / 16</td></tr>
+    <tr><th>最差角点</th><td>P=1100 N，L=502mm，b=19.5mm，h=44.5mm</td></tr>
+    <tr><th>最差角点挠度</th><td class="pass">1.620 mm（限值 2 mm，满足）</td></tr>
+    <tr><th>最差角点安全系数</th><td class="pass">2.739（限值 2.3，满足）</td></tr>
+    <tr><th>最差角点质量</th><td class="pass">3.420 kg（限值 20 kg，满足）</td></tr>
+    <tr><th>状态</th><td class="pass">robust_feasible</td></tr>
+  </tbody></table>
+
+  <h2>10. 失败与重规划轨迹</h2>
+  <table><tbody>
+    <tr><th>步骤</th><th>操作</th><th>结果</th></tr>
+    <tr><td>1</td><td>初始计算 b=25mm h=20mm P=1000N</td><td class="fail">挠度 12.5mm，安全系数 0.783，双重约束失败</td></tr>
+    <tr><td>2</td><td>候选搜索 width=[20~40] height=[20~40]</td><td class="pass">8/25 可行，最优 b=20mm h=40mm</td></tr>
+    <tr><td>3</td><td>公差验证 b=20mm h=40mm</td><td class="fail">9/16 通过，7个角点失败（载荷+10% 时挠度 2.316mm，安全系数 2.158）</td></tr>
+    <tr><td>4</td><td>扩展搜索 height=[45,50] P=1100N</td><td class="pass">10/10 可行，最优 b=20mm h=45mm</td></tr>
+    <tr><td>5</td><td>公差验证 b=20mm h=45mm</td><td class="pass">16/16 全部通过，最差挠度 1.62mm，安全系数 2.739</td></tr>
+  </tbody></table>
+
+  <h2>11. 最终结论</h2>
+  <ul>
+    <li class="pass">最终方案：宽 20mm × 高 45mm，S235 钢，长度 500mm</li>
+    <li class="pass">所有设计约束（安全系数 ≥ 2.3，挠度 ≤ 2mm，质量 ≤ 20kg）在公称工况下均满足</li>
+    <li class="pass">16 个制造公差 + 载荷波动角点工况全部通过，制造合格率 100%</li>
+    <li class="warn">高度参数对挠度和安全系数影响最大，制造时应优先保证高度精度</li>
+  </ul>
+
+  <h2>12. 证据和限制</h2>
+  <ul>
+    <li class="warn">材料参数（S235钢：E=200 GPa，σ<sub>y</sub>=235 MPa，ρ=7850 kg/m³）为工程参考数据，非真实实验验证。</li>
+    <li class="warn">本报告不代表真实实验或实物测试结果。</li>
+    <li>当前模型不覆盖：屈曲、疲劳、连接失效和大变形。</li>
+    <li>所有计算基于确定性矩形实心梁公式（cantilever-rectangular-end-load-v1）。</li>
+    <li>工具不调用大模型，不根据自然语言补全缺失工程数据。</li>
+  </ul>
+
+  <h2>13. 工具调用记录</h2>
+  <table><tbody>
+    <tr><th>序号</th><th>工具</th><th>输入摘要</th><th>输出摘要</th></tr>
+    <tr><td>1</td><td>calculate_cantilever</td><td>P=1000N L=500 b=25 h=20 S235</td><td class="fail">constraint_failed（挠度+安全系数）</td></tr>
+    <tr><td>2</td><td>search_design_candidates</td><td>width=[20,25,30,35,40] height=[20,25,30,35,40]</td><td class="pass">8/25可行，最优 b=20 h=40</td></tr>
+    <tr><td>3</td><td>calculate_cantilever</td><td>P=1000N L=500 b=20 h=40 S235</td><td class="pass">feasible，无失败约束</td></tr>
+    <tr><td>4</td><td>analyze_design_sensitivity</td><td>b=20 h=40 ±5%</td><td>completed，高度最敏感</td></tr>
+    <tr><td>5</td><td>verify_manufacturing_tolerance</td><td>b=20 h=40 公差验证</td><td class="fail">robustness_failed 9/16</td></tr>
+    <tr><td>6</td><td>search_design_candidates</td><td>height=[45,50] P=1100N</td><td class="pass">10/10可行，最优 b=20 h=45</td></tr>
+    <tr><td>7</td><td>calculate_cantilever</td><td>P=1100N L=500 b=20 h=45 S235</td><td class="pass">feasible，安全系数 2.884</td></tr>
+    <tr><td>8</td><td>verify_manufacturing_tolerance</td><td>b=20 h=45 公差验证</td><td class="pass">robust_feasible 16/16</td></tr>
+  </tbody></table>
+</body>
+</html>

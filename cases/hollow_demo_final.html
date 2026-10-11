@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>圆角空心悬臂支架确定性工程设计验证</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; margin: 2rem auto; max-width: 900px; padding: 0 1rem; color: #1f2937; }
+    h1 { border-bottom: 2px solid #2563eb; padding-bottom: .4rem; }
+    table { border-collapse: collapse; margin: .75rem 0 1.5rem; width: 100%; }
+    th, td { border: 1px solid #d1d5db; padding: .5rem .75rem; text-align: left; }
+    th { background: #f3f4f6; width: 35%; }
+    code { white-space: pre-wrap; word-break: break-word; }
+    .status { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>圆角空心悬臂支架确定性工程设计验证</h1>
+  <p>报告版本：<code>cantilever-design-dossier-v2</code></p>
+  <p>最终状态：<span class="status"><code>公差工况全部满足</code></span></p>
+  <p>生成方式：团队开发的确定性模板工具</p>
+  
+  <h2>1. 设计任务</h2>
+  <p>对实际圆角空心矩形截面悬臂支架执行确定性候选搜索、局部屈曲筛查、敏感性分析和制造公差验证。</p>
+  <h2>2. 最终方案输入</h2>
+  <table><tbody><tr><th>截面类型</th><td>实际圆角空心矩形截面</td></tr><tr><th>载荷</th><td>1000 N</td></tr><tr><th>长度</th><td>500 mm</td></tr><tr><th>外宽</th><td>40 mm</td></tr><tr><th>外高</th><td>80 mm</td></tr><tr><th>壁厚</th><td>2 mm</td></tr><tr><th>外圆角半径</th><td>10 mm</td></tr><tr><th>内宽</th><td>36 mm</td></tr><tr><th>内高</th><td>76 mm</td></tr><tr><th>内圆角半径</th><td>8 mm</td></tr><tr><th>材料</th><td>S235钢（工程参考参数）</td></tr></tbody></table>
+  <h2>3. 计算结果</h2>
+  <table><tbody><tr><th>最大应力</th><td>58.9673 MPa</td></tr><tr><th>最大挠度</th><td>0.614242 mm</td></tr><tr><th>质量</th><td>1.69991 kg</td></tr><tr><th>屈服安全系数</th><td>3.98526</td></tr><tr><th>局部屈曲安全系数</th><td>81.4051</td></tr></tbody></table>
+  
+  <h2>4. 局部屈曲筛查</h2>
+  <ul>
+    <li>筛查状态：<code>passed</code></li>
+    <li>方法版本：<code>elastic-plate-local-buckling-screening-v1</code></li>
+    <li>控制板件：<code>web</code></li>
+    <li>翼缘屈曲安全系数：<code>122.619</code>，k=4</li>
+    <li>腹板屈曲安全系数：<code>81.4051</code>，k=23.9</li>
+    <li>该结果是弹性局部屈曲工程筛查，不等同于材料专用规范的完整验算。</li>
+  </ul>
+  <h2>5. 约束与公差验证</h2>
+  <ul><li>计算失败约束：<code>[]</code></li><li>候选搜索结果：<code>约束满足</code></li><li>敏感性分析结果：<code>分析已完成</code></li><li>公差验证结果：<code>公差工况全部满足</code></li><li>公差工况数：<code>64</code></li><li>公差通过数：<code>64</code></li><li>公差非法几何数：<code>0</code></li></ul>
+  <h2>6. 失败与重规划轨迹</h2>
+  <code>[{&quot;reason&quot;: &quot;初始薄壁高载荷方案挠度和屈服安全系数未达阈值&quot;, &quot;stage&quot;: &quot;初始方案计算&quot;, &quot;status&quot;: &quot;constraint_failed&quot;}, {&quot;reason&quot;: &quot;首选名义可行方案在六维公差下仅16/64通过&quot;, &quot;stage&quot;: &quot;候选方案搜索&quot;, &quot;status&quot;: &quot;no_robust_candidate_in_first_ranking&quot;}, {&quot;reason&quot;: &quot;扩大外宽、外高、壁厚和圆角候选集合&quot;, &quot;stage&quot;: &quot;replanning&quot;, &quot;status&quot;: &quot;expanded_search&quot;}, {&quot;reason&quot;: &quot;最终候选64/64公差角点通过&quot;, &quot;stage&quot;: &quot;final_verification&quot;, &quot;status&quot;: &quot;robust_feasible&quot;}]</code>
+  <h2>7. 证据和限制</h2>
+  <p>本文件为本地确定性工具链演示报告；公开材料参数为工程参考数据，不代表真实实验验证。</p>
+  <ul>
+    <li>本报告不代表真实实验或实物测试结果。</li>
+    <li>公开材料参数只能作为工程参考数据。</li>
+    <li>局部屈曲结果是工程筛查，不代表完整规范验算或真实实验结果。</li><li>未覆盖初始缺陷、残余应力、圆角板件耦合、屈曲后强度、整体屈曲、疲劳、连接和焊缝失效。</li>
+  </ul>
+  <h2>8. 数据来源字段</h2>
+  <ul>
+    <li>计算结果、候选搜索、敏感性分析、公差验证和重规划轨迹由调用方以 JSON 结构传入。</li>
+    <li>工具不调用任何大模型，不根据自然语言自行补全缺失工程数据。</li>
+  </ul>
+</body>
+</html>

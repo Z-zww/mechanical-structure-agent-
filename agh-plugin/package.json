@@ -1,0 +1,17 @@
+{
+  "name": "mechanical-agent-tools",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "exports": "./index.mjs",
+  "agnes": {
+    "plugins": [
+      {
+        "export": "mechanicalTools",
+        "id": "ext:mechanical-agent/tools",
+        "inject": ["extension"]
+      }
+    ]
+  }
+}

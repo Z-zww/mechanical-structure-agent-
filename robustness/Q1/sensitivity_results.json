@@ -1,0 +1,31 @@
+{
+  "source": "AGH analyze_design_sensitivity",
+  "sensitivity_version": "cantilever-local-sensitivity-v1",
+  "computed_at": "2026-10-09",
+  "input": {
+    "load_n": 1000.0,
+    "length_mm": 500.0,
+    "width_mm": 25.0,
+    "height_mm": 40.0,
+    "material_id": "steel_s235",
+    "perturbation_percent": 5.0
+  },
+  "baseline": {
+    "max_stress_mpa": 75.0,
+    "max_deflection_mm": 1.5625,
+    "mass_kg": 3.925,
+    "safety_factor": 3.1333333333333337
+  },
+  "relative_sensitivity": {
+    "load_n": {"max_stress_mpa": 1.0, "max_deflection_mm": 1.0, "mass_kg": 0.0, "safety_factor": -1.0025062656641601},
+    "length_mm": {"max_stress_mpa": 1.0, "max_deflection_mm": 3.002500000000004, "mass_kg": 1.0, "safety_factor": -1.0025062656641601},
+    "width_mm": {"max_stress_mpa": -1.00250626566416, "max_deflection_mm": -1.0025062656641597, "mass_kg": 1.0, "safety_factor": 1.0},
+    "height_mm": {"max_stress_mpa": -2.010037625391802, "max_deflection_mm": -3.0251318146560826, "mass_kg": 1.0, "safety_factor": 2.000000000000003}
+  },
+  "key_ranges": {
+    "height_minus5_safety_factor": 2.8278333333333334,
+    "height_plus5_safety_factor": 3.454500000000001,
+    "height_minus5_deflection_mm": 1.822423093745444,
+    "height_plus5_deflection_mm": 1.3497462477054312
+  }
+}

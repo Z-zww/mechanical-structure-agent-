@@ -1,0 +1,28 @@
+{
+  "report_file": "cases/hollow_demo_final.html",
+  "search_status": "feasible",
+  "initial_search_feasible_count": 84,
+  "final_input": {
+    "load_n": 1000,
+    "length_mm": 500,
+    "outer_width_mm": 40,
+    "outer_height_mm": 80,
+    "wall_thickness_mm": 2,
+    "outer_corner_radius_mm": 10,
+    "material_id": "steel_s235",
+    "max_deflection_mm": 2.0,
+    "min_safety_factor": 2.3,
+    "max_mass_kg": 20.0,
+    "min_local_buckling_factor": 1.0
+  },
+  "final_status": "feasible",
+  "final_safety_factor": 3.985262297946174,
+  "final_deflection_mm": 0.6142422966559098,
+  "final_local_buckling_factor": 81.40508658161141,
+  "tolerance_status": "robust_feasible",
+  "tolerance_cases": 64,
+  "tolerance_passed": 64,
+  "tolerance_invalid_geometry": 0,
+  "report_format": "html",
+  "report_contains_stability_section": true
+}

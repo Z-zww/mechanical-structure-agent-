@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>悬臂支架确定性工程设计验证</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; margin: 2rem auto; max-width: 900px; padding: 0 1rem; color: #1f2937; }
+    h1 { border-bottom: 2px solid #2563eb; padding-bottom: .4rem; }
+    table { border-collapse: collapse; margin: .75rem 0 1.5rem; width: 100%; }
+    th, td { border: 1px solid #d1d5db; padding: .5rem .75rem; text-align: left; }
+    th { background: #f3f4f6; width: 35%; }
+    code { white-space: pre-wrap; word-break: break-word; }
+    .status { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>悬臂支架确定性工程设计验证</h1>
+  <p>报告版本：<code>cantilever-design-dossier-v3</code></p>
+  <p>最终状态：<span class="status"><code>completed_feasible_robust</code></span></p>
+  <p>状态定义：本报告的组合状态表示最终计算状态为 <code>feasible</code> 且制造公差验证状态为 <code>robust_feasible</code>。</p>
+  <p>生成方式：团队开发的确定性模板工具</p>
+  <p><strong>说明：</strong>输入的项目名称疑似存在编码异常，已使用规范名称“悬臂支架确定性工程设计验证”。</p>
+  <h2>1. 设计任务</h2>
+  <p>基于本次完整闭环生成中文HTML报告：覆盖初始非法几何与 INVALID_GEOMETRY、Agnes 失败分析与重规划、候选搜索与最终方案、应力/挠度/质量/屈服安全系数、翼缘与腹板局部屈曲筛查、敏感性分析、64 个制造公差工况、规范依据、弹性临界应力解释边界、工程参考数据与非真实实验声明。最终方案：材料 <code>steel_s235</code>，载荷 500 N，长度 400 mm，外宽 40 mm，外高 50 mm，壁厚 2 mm，外圆角 5 mm。</p>
+  <h2>2. 最终方案输入</h2>
+  <table><tbody><tr><th>截面类型</th><td>实际圆角空心矩形截面</td></tr><tr><th>载荷</th><td>500 N</td></tr><tr><th>长度</th><td>400 mm</td></tr><tr><th>外宽</th><td>40 mm</td></tr><tr><th>外高</th><td>50 mm</td></tr><tr><th>壁厚</th><td>2 mm</td></tr><tr><th>外圆角半径</th><td>5 mm</td></tr><tr><th>内宽</th><td>36 mm</td></tr><tr><th>内高</th><td>46 mm</td></tr><tr><th>内圆角半径</th><td>3 mm</td></tr><tr><th>材料</th><td>S235钢（工程参考参数）</td></tr></tbody></table>
+  <h2>3. 计算结果</h2>
+  <table><tbody><tr><th>最大应力</th><td>43.0095 MPa</td></tr><tr><th>最大挠度</th><td>0.458768 mm</td></tr><tr><th>质量</th><td>1.03703 kg</td></tr><tr><th>屈服安全系数</th><td>5.46391</td></tr><tr><th>局部屈曲安全系数</th><td>74.7172</td></tr></tbody></table>
+  <h2>4. 局部屈曲筛查</h2>
+  <ul>
+    <li>筛查状态：<code>passed</code></li>
+    <li>方法版本：<code>elastic-plate-local-buckling-screening-v1</code></li>
+    <li>控制板件：<code>flange</code></li>
+    <li>翼缘屈曲安全系数：<code>74.7172</code>，k=4</li>
+    <li>腹板屈曲安全系数：<code>251.12</code>，k=23.9</li>
+    <li>该结果是弹性局部屈曲工程筛查，不等同于材料专用规范的完整验算。</li>
+  </ul>
+  <h2>5. 约束与公差验证</h2>
+  <ul><li>计算失败约束：<code>[]</code></li><li>候选搜索结果：<code>约束满足</code></li><li>敏感性分析结果：<code>分析已完成</code></li><li>公差验证结果：<code>公差工况全部满足</code></li><li>公差工况数：<code>64</code></li><li>公差通过数：<code>64</code></li><li>公差非法几何数：<code>0</code></li></ul>
+  <h2>6. 失败与重规划轨迹</h2>
+  <code>[{"action": "calculate_hollow_cantilever", "decision": "Replan: keep material steel_s235, load 500 N, and length 400 mm unchanged; search domain outer_width 40 to 100 mm, outer_height 50 to 120 mm, wall_thickness 2 to 6 mm, outer_corner_radius 2/3/5 mm; constraints min_safety_factor&gt;=2.3, max_deflection_mm&lt;=2, max_mass_kg&lt;=20, min_local_buckling_factor&gt;=1.", "diagnosis": "outer_height=50 mm is not greater than 2*wall_thickness=60 mm, causing negative inner cavity height and invalid geometry.", "evidence": "calculate_hollow_cantilever returned ok=false and error_code=INVALID_GEOMETRY.", "failure_code": "INVALID_GEOMETRY", "failure_message": "External dimensions must be strictly greater than twice wall thickness; inner cavity dimensions must be positive.", "purpose": "Use intentionally invalid initial geometry: outer_width=50 mm, outer_height=50 mm, wall_thickness=30 mm, and verify inner cavity dimensions are positive.", "result_status": "failed", "step": 1}, {"action": "search_hollow_design_candidates", "evidence": "Search returned combinations_considered=735, candidates_evaluated=196, invalid_geometry_count=539, feasible_count=196. Best candidate outer_width=40, outer_height=50, wall_thickness=2, outer_corner_radius=5.", "notes": "First call failed because max_candidates was too small for candidate combination count; another call failed due to parameter format mismatch with tool schema validation; then read tool schema and set max_candidates to 1000, which succeeded.", "purpose": "Perform grid search over valid geometric domain and filter candidates satisfying constraints.", "result_status": "retried_after_errors", "step": 2}]</code>
+  <h2>7. 规范依据</h2>
+  <ul>
+    <li>EN 1993-1-5:2006+A2:2019，Eurocode 3: Design of steel structures — Part 1-5: Plated structural elements。</li>
+    <li>本项目仅借用内部板件弹性屈曲系数与应力分布边界进行工程筛查，不声称完成 EN 1993-1-5 的完整材料设计验算。</li>
+  </ul>
+  <h2>8. 证据和限制</h2>
+  <p>Agnes 首先调用 calculate_hollow_cantilever 对 outer_width=50、outer_height=50、wall_thickness=30 的故意非法几何执行复算，工具返回结构化失败 INVALID_GEOMETRY：外部尺寸必须严格大于两倍壁厚，内腔尺寸必须为正数（外高 50 mm &lt; 2×壁厚 60 mm，内腔高度为负）。据此 Agnes 将设计域收窄到可制造、可建模的合法范围，并调用 search_hollow_design_candidates 对 735 个候选组合做网格搜索；其中 196 个候选通过静力、挠度、质量和局部屈曲筛查，最佳候选为 outer_width=40、outer_height=50、wall_thickness=2、outer_corner_radius=5。之后对最终方案再次执行 calculate_hollow_cantilever（feasible）、analyze_hollow_design_sensitivity（完成）与 verify_hollow_manufacturing_tolerance（64/64 角点全部可行，最严重度 0.5459），全部保持可行。搜索过程中出现参数错误：一次因 max_candidates 不足导致候选组合数量超限，一次因参数格式不匹配触发工具 schema 校验错误，最终通过读取工具 schema 并使用合法值完成搜索。</p>
+  <ul>
+    <li>本报告不代表真实实验或实物测试结果。</li>
+    <li>公开材料参数只能作为工程参考数据。</li>
+    <li>局部屈曲结果是工程筛查，不代表完整规范验算或真实实验结果。</li>
+    <li>弹性临界应力若高于材料屈服强度，不得外推为实际允许应力或实际承载能力；屈服安全系数与局部屈曲筛查系数是不同指标。</li>
+    <li>未覆盖初始缺陷、残余应力、圆角板件耦合、屈曲后强度、整体屈曲、疲劳、连接和焊缝失效。</li>
+  </ul>
+  <h2>9. 公开 RHS 工程参考对比</h2>
+  <p>为增强可复现性，本项目使用 Steel for Life / SCI Interactive Blue Book 的热轧矩形空心截面公开表进行属性对照。该页面声明数据依据 <code>BS EN 10210-2:2006</code>。本节仅表示“与公开工程参考型材表的数值对比”，不代表真实实验验证，也不将标准型材反推为本项目任意圆角半径模型的精确真值。</p>
+  <p>统一工况：<code>P=500 N</code>、<code>L=400 mm</code>；材料采用 S235 工程参考参数 <code>E=200 GPa</code>、<code>fy=235 MPa</code>、<code>rho=7850 kg/m³</code>。公开表中的主轴惯性矩和主轴截面模量直接进入悬臂端部集中载荷公式。</p>
+  <table><thead><tr><th>公开规格</th><th>面积</th><th>主轴惯性矩</th><th>主轴截面模量</th><th>单位质量</th><th>计算应力</th><th>计算挠度</th><th>400 mm 梁质量</th></tr></thead><tbody>
+    <tr><td>50×30×3.2 mm</td><td>4.60 cm²</td><td>14.2 cm⁴</td><td>5.68 cm³</td><td>3.61 kg/m</td><td>35.211 MPa</td><td>0.3756 mm</td><td>1.444 kg</td></tr>
+    <tr><td>60×40×3.2 mm</td><td>5.88 cm²</td><td>27.8 cm⁴</td><td>9.27 cm³</td><td>4.62 kg/m</td><td>21.575 MPa</td><td>0.1918 mm</td><td>1.848 kg</td></tr>
+    <tr><td>80×40×3.2 mm</td><td>7.16 cm²</td><td>57.2 cm⁴</td><td>14.3 cm³</td><td>5.62 kg/m</td><td>13.986 MPa</td><td>0.0932 mm</td><td>2.248 kg</td></tr>
+  </tbody></table>
+  <ul>
+    <li>面积换算得到的理论单位质量与公开表单位质量相对误差均小于 0.1%。</li>
+    <li>公开表主轴截面模量与 <code>I/(H/2)</code> 的一致性检查通过。</li>
+    <li>公开来源未提供可直接用于本项目圆角几何输入的外圆角和内圆角半径，因此未调用猜测半径进行“伪验证”。</li>
+    <li>详细原始文件、网址、访问日期、哈希和脚本见 <code>validation/source_registry.md</code>、<code>validation/validation_report.md</code> 及其结果 JSON。</li>
+  </ul>
+  <h2>10. 数据来源字段</h2>
+  <ul>
+    <li>计算结果、候选搜索、敏感性分析、公差验证和重规划轨迹由调用方以 JSON 结构传入。</li>
+    <li>工具不调用任何大模型，不根据自然语言自行补全缺失工程数据。</li>
+  </ul>
+</body>
+</html>
