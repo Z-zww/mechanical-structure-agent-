@@ -111,6 +111,55 @@ class DesignDossierTests(unittest.TestCase):
                 "calculation_result_json": None,
             })
 
+    def test_accepts_strict_json_when_agh_serializes_native_fields_once(self):
+        payload = {
+            **self.payload,
+            "calculation_result": self.payload["calculation_result_json"],
+            "tolerance_result": self.payload["tolerance_result_json"],
+            "replanning_trace": self.payload["replanning_trace_json"],
+        }
+        for legacy_key in ("calculation_result_json", "tolerance_result_json", "replanning_trace_json"):
+            payload.pop(legacy_key)
+        result = generate(payload)
+        self.assertEqual(result["status"], "generated")
+        self.assertIn("75", result["content"])
+
+    def test_native_field_has_deterministic_precedence_over_legacy_field(self):
+        native = json.loads(self.payload["calculation_result_json"])
+        native["metrics"]["max_stress_mpa"] = 76
+        result = generate({
+            **self.payload,
+            "calculation_result": native,
+        })
+        self.assertIn("76", result["content"])
+        self.assertNotIn("75 MPa", result["content"])
+
+    def test_rejects_python_dict_string_in_native_field(self):
+        with self.assertRaisesRegex(InputError, "严格JSON"):
+            generate({
+                **self.payload,
+                "calculation_result": "{'ok': True, 'status': 'feasible'}",
+            })
+
+    def test_accepts_long_nested_native_payload_without_truncation(self):
+        calculation = json.loads(self.payload["calculation_result_json"])
+        calculation["evidence"] = {
+            "中文说明": [
+                {"index": i, "text": "工程参考数据" * 8, "nested": {"passed": True}}
+                for i in range(600)
+            ]
+        }
+        payload = {
+            **self.payload,
+            "calculation_result": calculation,
+            "tolerance_result": json.loads(self.payload["tolerance_result_json"]),
+        }
+        payload.pop("calculation_result_json")
+        payload.pop("tolerance_result_json")
+        self.assertGreater(len(json.dumps(calculation, ensure_ascii=False)), 20_000)
+        result = generate(payload)
+        self.assertEqual(result["status"], "generated")
+
     def test_generates_html_with_escaped_content(self):
         result = generate({**self.payload, "format": "html", "project_name": "A < B"})
         self.assertEqual(result["format"], "html")
@@ -119,6 +168,48 @@ class DesignDossierTests(unittest.TestCase):
         self.assertIn("<table>", result["content"])
         self.assertNotIn("<pre>", result["content"])
         self.assertIn("在安全系数", result["content"])
+
+    def test_html_constraint_visual_uses_only_declared_limits(self):
+        calculation = json.loads(self.payload["calculation_result_json"])
+        calculation["constraints"] = {
+            "deflection": {"actual": 1.5625, "limit": 2.0, "passed": True},
+            "safety_factor": {"actual": 3.1333, "limit": 2.3, "passed": True},
+        }
+        result = generate({
+            **self.payload,
+            "format": "html",
+            "calculation_result_json": json.dumps(calculation),
+        })
+        self.assertIn("约束裕度概览", result["content"])
+        self.assertIn("constraint-chart", result["content"])
+        self.assertIn("限值使用率", result["content"])
+        self.assertIn("要求/实际", result["content"])
+
+    def test_html_without_limits_does_not_invent_a_chart(self):
+        result = generate({**self.payload, "format": "html"})
+        self.assertIn("未提供可绘制的数值约束", result["content"])
+
+    def test_html_renders_replanning_trace_as_readable_escaped_steps(self):
+        payload = {
+            **self.payload,
+            "format": "html",
+            "replanning_trace": [
+                {
+                    "step": 1,
+                    "stage": "initial_calculation",
+                    "result_status": "constraint_failed",
+                    "decision": "安全系数不足 < 2.3",
+                    "metrics": {"safety_factor": 1.2},
+                },
+                {"step": 2, "stage": "candidate_search", "feasible_count": 3},
+            ],
+        }
+        content = generate(payload)["content"]
+        self.assertIn('class="trace-list"', content)
+        self.assertIn("步骤 1：初始方案计算", content)
+        self.assertIn("步骤 2：候选方案搜索", content)
+        self.assertIn("安全系数不足 &lt; 2.3", content)
+        self.assertNotIn("安全系数不足 < 2.3", content)
 
     def test_localizes_english_summary_status_and_material(self):
         calculation = json.loads(self.payload["calculation_result_json"])

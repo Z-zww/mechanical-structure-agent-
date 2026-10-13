@@ -13,6 +13,7 @@ const expectedNames = [
   'verify_manufacturing_tolerance',
   'verify_hollow_manufacturing_tolerance',
   'generate_design_dossier',
+  'fe_beam_cantilever',
 ]
 
 const solidInput = {
@@ -103,7 +104,9 @@ test('registers all tools exactly once and executes one valid sample per tool', 
       project_name: '插件注册测试',
       task_summary: '验证所有注册工具均能返回结构化结果。',
       final_status: 'feasible',
-      format: 'markdown',
+      format: 'html',
+      success: true,
+      elapsed_ms: 12,
       calculation_result: {
         ok: true,
         status: 'feasible',
@@ -121,6 +124,17 @@ test('registers all tools exactly once and executes one valid sample per tool', 
         failed_constraints: [],
       },
     },
+    fe_beam_cantilever: {
+      load_n: 1000,
+      length_mm: 500,
+      youngs_modulus_gpa: 200,
+      width_mm: 40,
+      height_mm: 70,
+      n_elements: 20,
+      yield_strength_mpa: 235,
+      max_deflection_mm: 2,
+      min_safety_factor: 2.3,
+    },
   }
 
   for (const name of expectedNames) {
@@ -129,4 +143,44 @@ test('registers all tools exactly once and executes one valid sample per tool', 
     assert.ok(Array.isArray(result.content), `${name} 缺少 content 数组`)
     assert.ok(result.content.length > 0, `${name} content 为空`)
   }
+
+  const dossierSchema = registered.get('generate_design_dossier').parameters
+  assert.equal(dossierSchema.additionalProperties, true)
+  assert.deepEqual(dossierSchema.anyOf, [
+    { required: ['calculation_result'] },
+    { required: ['calculation_result_json'] },
+  ])
+  assert.match(
+    registered.get('generate_design_dossier').execute
+      ? (await registered.get('generate_design_dossier').execute(payloads.generate_design_dossier)).content[0].text
+      : '',
+    /<!doctype html>/i,
+  )
+
+  const longCalculation = {
+    ...payloads.generate_design_dossier.calculation_result,
+    evidence: Array.from({ length: 500 }, (_, index) => ({
+      index,
+      note: '中文嵌套工程参考数据'.repeat(6),
+      checks: { source: 'structured', passed: true },
+    })),
+  }
+  const longDossier = await registered.get('generate_design_dossier').execute({
+    ...payloads.generate_design_dossier,
+    project_name: '长中文载荷集成测试',
+    calculation_result: longCalculation,
+    search_result: { status: 'completed', candidates: Array.from({ length: 100 }, (_, index) => ({ index, feasible: true })) },
+    sensitivity_result: { status: 'completed', dominant_parameters: ['高度', '长度'] },
+    tolerance_result: { status: 'robust_feasible', cases_evaluated: 16, passed_cases: 16 },
+    replanning_trace: [{ step: 1, stage: 'candidate_search', decision: '使用结构化数据复核' }],
+  })
+  assert.equal(longDossier.structured.ok, true, JSON.stringify(longDossier.structured))
+  assert.ok(Buffer.byteLength(JSON.stringify(longCalculation), 'utf8') > 20_000)
+  assert.match(longDossier.content[0].text, /长中文载荷集成测试/)
+
+  const fea = (await registered.get('fe_beam_cantilever').execute(payloads.fe_beam_cantilever)).structured
+  assert.equal(fea.validation_type, 'beam_element_fea_review')
+  assert.equal(fea.status, 'feasible')
+  assert.ok(fea.comparison.tip_deflection_mm.relative_error < 1e-8)
+  assert.equal(fea.mesh_consistency.length, 4)
 })

@@ -14,7 +14,7 @@
 - `verify_manufacturing_tolerance`：枚举载荷、长度、宽度和高度公差边界，输出最不利工况及失败约束。
 - `generate_design_dossier`：将已返回的实心或圆角空心结构化计算、搜索、敏感性、公差、重规划和可选公开参考结果整理为工程报告内容。用户指定 HTML 时输出 HTML；未指定格式时默认输出 Markdown。工具默认只返回内容，不写入文件。公开参考结果必须标记 `not_experimental: true`，并且只用于工程参考对比。
 
-报告工具的数据字段优先使用原生结构化值：`calculation_result`、`search_result`、`sensitivity_result`、`tolerance_result` 和数组 `replanning_trace`。旧会话也可以继续使用带 `_json` 后缀的字符串字段，工具会兼容解析；不要把长工具结果手工拼接成字符串，以免在 AGH 调用边界发生转义或截断。
+报告工具的数据字段优先使用原生结构化值：`calculation_result`、`search_result`、`sensitivity_result`、`tolerance_result` 和数组 `replanning_trace`。`calculation_result` 与兼容字段 `calculation_result_json` 二选一即可；两端契约已统一。报告根输入允许 Agnes 附带 `success`、`elapsed_ms` 等非工程元数据，这些字段不会参与计算。旧会话也可以继续使用带 `_json` 后缀的字符串字段，工具会兼容解析；不要把长工具结果手工拼接成字符串，以免在 AGH 调用边界发生转义或截断。中文报告中的 `task_summary`、`evidence_note` 以及重规划轨迹自然语言应使用中文；工具名、字段名和状态码可以保留原样。模板不自动翻译调用方文本。
 
 ## 材料库
 
@@ -24,16 +24,17 @@
 
 ## 运行方式
 
-工具被 AGH 调用时，插件会根据自身文件位置自动定位项目根目录和 `tools/` 目录，不依赖固定盘符或固定工作目录。默认使用项目目录中的专用虚拟环境：
+发布包中的 `agh-plugin/tools/` 已包含插件运行所需的团队计算脚本。插件从自身目录定位这些脚本，不依赖开发机的固定盘符、项目目录名或当前工作目录。完整源码包中的插件也可使用同级项目 `tools/` 目录。
 
-Windows：`.venv\\Scripts\\python.exe`  
-Linux/macOS：`.venv/bin/python`
-
-插件随后执行 `tools/` 下对应的 Python 脚本。若现场环境需要指定其他 Python 解释器，可在启动 AGH 前设置：
+运行环境要求：安装 AGH 和 Python 3.10 或更新版本；本项目工具仅使用 Python 标准库，无需额外 `pip install` 依赖。插件默认先查找项目专用虚拟环境，再使用系统 `python.exe`（Windows）或 `python`（Linux/macOS）。如果 Python 不在 `PATH`，请在启动 AGH 的同一个终端中设置：
 
 ```powershell
-$env:PYTHON_EXEC = 'D:\\path\\to\\python.exe'
+$env:PYTHON_EXEC = 'C:\\完整路径\\到\\python.exe'
 ```
+
+Windows 可先用 `py -3 --version` 确认 Python。非 Windows 系统请将变量值设为可执行的 Python 路径。目标电脑需单独安装兼容版本的 AGH 和 Python；本项目不打包这些第三方运行时。
+
+若 AGH 插件安装方式引用本地文件，请将发布包内完整的 `agh-plugin/` 文件夹作为插件源安装，并完成 AGH 的信任和启用步骤。若使用压缩包，请先解压；不要只复制 `index.mjs`，因为 `tools/` 子目录是插件运行必需文件。
 
 插件默认将单次 Python 工具执行限制为 10 秒。测试或受控演示环境可通过 `PYTHON_TOOL_TIMEOUT_MS` 覆盖，例如：
 
@@ -41,15 +42,7 @@ $env:PYTHON_EXEC = 'D:\\path\\to\\python.exe'
 $env:PYTHON_TOOL_TIMEOUT_MS = '10000'
 ```
 
-正式提交时建议将项目代码、`tools/`、专用虚拟环境依赖说明和插件一起交付；不需要修改用户全局 Python 环境。
-
-发布 ZIP 为了避免携带本地环境，不包含 `.venv`。现场运行前请在启动 AGH 的同一个 PowerShell 窗口设置项目专用解释器：
-
-```powershell
-$env:PYTHON_EXEC = 'F:\hackathon\黑客松\mechanical-agent\.venv\Scripts\python.exe'
-```
-
-不要把全局 Python 路径或 API key 写入插件文件。
+发布 ZIP 不包含 `.venv`、AGH 本地数据、API 密钥或第三方原始资料。跨电脑运行仍需在目标设备实际完成安装、信任、启用和工具调用；自动化测试不能代替目标设备上的 AGH 兼容性验收。不要把个人解释器路径或 API key 写入插件文件。
 
 ## 安全与许可
 
@@ -71,6 +64,6 @@ node --test agh-plugin/test-hollow-demo.mjs
 node --test agh-plugin/test-failure-injection.mjs
 ```
 
-第一条命令验证确定性工程计算和报告生成；第二条命令验证 9 个工具是否唯一注册、路径是否可定位，以及每个工具能否完成一次合法调用；第三条命令通过插件封装验证空心方案通过、约束失败、非法几何和六种材料稳定性筛查；最后一条命令验证脚本缺失、解释器缺失、空输出、非法 JSON 和超时等插件故障场景。当前基线为 Python `65/65`、插件注册 `1/1`、空心演示 `4/4`、故障注入 `7/7`。
+第一条命令验证确定性工程计算和报告生成；第二条命令验证 10 个工具是否唯一注册、路径是否可定位，以及每个工具能否完成一次合法调用；第三条命令通过插件封装验证空心方案通过、约束失败、非法几何和六种材料稳定性筛查；最后一条命令验证脚本缺失、解释器缺失、空输出、非法 JSON 和超时等插件故障场景。当前基线为 Python `88/88`，插件注册、空心演示、故障注入分别为 `1/1`、`4/4`、`7/7`。插件注册测试还会验证长中文结构化载荷、报告附加元数据、输入契约兼容和 HTML 输出。
 
 可复现实例输入和本地结果分别保存在 `cases/hollow_demo_cases.json` 与 `cases/hollow_demo_results.json`。结果文件采用标准 JSON Unicode 转义，避免不同 Windows 终端代码页影响中文诊断信息。

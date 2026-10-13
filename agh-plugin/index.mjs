@@ -172,6 +172,30 @@ const hollowToleranceParameters = {
   additionalProperties: false,
 }
 
+const feaReviewParameters = {
+  [Kind]: 'Object',
+  type: 'object',
+  properties: {
+    load_n: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    length_mm: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    youngs_modulus_gpa: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    width_mm: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    height_mm: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    inertia_mm4: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    neutral_axis_mm: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    n_elements: { [Kind]: 'Integer', type: 'integer', minimum: 1, maximum: 100, default: 20 },
+    yield_strength_mpa: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    max_deflection_mm: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+    min_safety_factor: { [Kind]: 'Number', type: 'number', exclusiveMinimum: 0 },
+  },
+  required: ['load_n', 'length_mm', 'youngs_modulus_gpa'],
+  oneOf: [
+    { required: ['width_mm', 'height_mm'] },
+    { required: ['inertia_mm4', 'neutral_axis_mm'] },
+  ],
+  additionalProperties: false,
+}
+
 const dossierParameters = {
   [Kind]: 'Object',
   type: 'object',
@@ -198,7 +222,17 @@ const dossierParameters = {
     evidence_note: { [Kind]: 'String', type: 'string', maxLength: 4000 },
   },
   required: ['project_name', 'task_summary', 'final_status'],
-  additionalProperties: false,
+  // Agnes may attach bookkeeping fields (for example success/elapsed metadata)
+  // around the structured tool results.  They are not engineering inputs and
+  // must reach the deterministic Python validator instead of being rejected at
+  // the AGH boundary.  The Python tool still validates all fields it consumes.
+  additionalProperties: true,
+  // Keep the native object path and the legacy JSON-string path equivalent:
+  // exactly one calculation representation is required by the Python tool.
+  anyOf: [
+    { required: ['calculation_result'] },
+    { required: ['calculation_result_json'] },
+  ],
 }
 
 const meta = {
@@ -244,6 +278,7 @@ const toolPaths = {
   verify_manufacturing_tolerance: resolve(toolDirectory, 'manufacturing_tolerance.py'),
   verify_hollow_manufacturing_tolerance: resolve(toolDirectory, 'hollow_manufacturing_tolerance.py'),
   generate_design_dossier: resolve(toolDirectory, 'design_dossier.py'),
+  fe_beam_cantilever: resolve(toolDirectory, 'fe_beam_cantilever.py'),
 }
 const pythonToolTimeoutMs = Number.parseInt(process.env.PYTHON_TOOL_TIMEOUT_MS || '10000', 10)
 
@@ -267,7 +302,12 @@ function executePythonTool(scriptPath, input) {
     try {
       child = spawn(pythonExecutable, ['-B', scriptPath], {
         cwd: projectRoot,
-        env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+        env: {
+          ...process.env,
+          PYTHONDONTWRITEBYTECODE: '1',
+          PYTHONUTF8: '1',
+          PYTHONIOENCODING: 'utf-8',
+        },
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
       })
@@ -422,13 +462,26 @@ export const mechanicalTools = {
     })
     agnes.registerTool({
       name: 'generate_design_dossier',
-      description: '使用团队开发的确定性模板，根据已返回的实心或圆角空心结构化计算、搜索、敏感性、公差和重规划结果生成工程报告内容。请优先传入真正的结构化对象字段 calculation_result、search_result、sensitivity_result、tolerance_result 和数组字段 replanning_trace；不要把长结果转成字符串。默认返回Markdown；用户明确要求HTML时返回HTML。不会补造缺失数据，不调用模型，也不直接写入文件。',
+      description: '使用团队开发的确定性模板，根据已返回的实心或圆角空心结构化计算、搜索、敏感性、公差和重规划结果生成工程报告内容。请优先传入真正的结构化对象字段 calculation_result、search_result、sensitivity_result、tolerance_result 和数组字段 replanning_trace；不要把长结果转成字符串。生成中文报告时，task_summary、evidence_note 及重规划轨迹中的自然语言说明必须使用中文，工具名、字段名和状态码可保留原样；本工具不翻译调用方文本。默认返回Markdown；用户明确要求HTML时返回HTML。不会补造缺失数据，不调用模型，也不直接写入文件。',
       parameters: dossierParameters,
       meta,
       async execute(input) {
         const structured = await executePythonTool(toolPaths.generate_design_dossier, input)
         return {
           content: [{ type: 'text', text: structured.content || JSON.stringify(structured) }],
+          structured,
+        }
+      },
+    })
+    agnes.registerTool({
+      name: 'fe_beam_cantilever',
+      description: '使用确定性 Euler-Bernoulli 梁单元有限元对悬臂支架作独立数值复核，并与解析解比较应力、挠度和固定端弯矩，附网格一致性结果。仅为一维梁模型，不是通用三维 FEA 或物理实验。空心截面需由上游提供惯性矩及中性轴距离。',
+      parameters: feaReviewParameters,
+      meta,
+      async execute(input) {
+        const structured = await executePythonTool(toolPaths.fe_beam_cantilever, input)
+        return {
+          content: [{ type: 'text', text: JSON.stringify(structured) }],
           structured,
         }
       },

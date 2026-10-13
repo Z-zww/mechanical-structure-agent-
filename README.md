@@ -26,7 +26,7 @@
 
 ## 当前状态
 
-已完成并测试九个确定性工程工具：
+已完成并测试十个确定性工程工具：
 
 - `tools/cantilever_calculator.py`：单点计算；
 - `tools/hollow_cantilever_calculator.py`：实际圆角空心矩形截面单点计算，并对翼缘和腹板进行弹性局部屈曲筛查；
@@ -37,10 +37,11 @@
 - `tools/design_sensitivity.py`：局部敏感度分析；
 - `tools/manufacturing_tolerance.py`：载荷、长度、宽度和高度公差边界验证。
 - `tools/design_dossier.py`：根据已返回的结构化结果生成确定性 Markdown/HTML 工程报告。
+- `tools/fe_beam_cantilever.py`：使用一维 Euler-Bernoulli 梁单元有限元作独立数值复核，不是通用三维 FEA。
 
 材料库已扩展为 S235、S355、304不锈钢、6061-T6铝、7075-T6铝和 Ti-6Al-4V 六种工程参考材料；参数用于可复现计算，不代表真实实验验证。
 
-项目专用`.venv`中已通过65项标准库测试；插件层注册、空心演示和故障注入测试共12项也已通过。报告工具另有公开工程参考数据和旧字段兼容测试。AGH插件源代码现已加入圆角空心矩形截面计算、四维候选搜索、六参数敏感性分析、六维公差验证和可选公开参考报告字段的注册定义；上一版已安装插件曾完成安装、信任、启用和端到端调用验证。由于当前AGH后台处于状态不可确认的只读恢复模式，本轮代码尚未重新同步到后台，不能把新工具描述为已在AGH现场运行。官方AGH源码位于同级目录`../agh-official`。
+项目专用`.venv`中已通过88项标准库测试；插件注册、空心演示和故障注入测试合计12项通过。AGH 插件已通过官方包管理事务更新、信任并启用；报告工具在安装包入口通过约190 KB中文嵌套结构化载荷的 HTML 生成回归。当前本机验证不替代其他电脑上的兼容性验收。AGH 插件源码位于同级目录`../agh-src/extensions/mechanical-agent-tools`。
 
 空心截面工具对六种材料均启用基于经典弹性薄板理论的局部屈曲筛查，翼缘和腹板分别计算，材料差异由弹性模量与泊松比体现。该结果是工程筛查，不等同于材料专用规范的完整验算；适用范围和公式见`docs/hollow-section-mechanics-v2.md`。
 
@@ -56,15 +57,17 @@
 
 本地空心演示案例位于`cases/hollow_demo_cases.json`，完整闭环的中文 HTML 演示报告位于`cases/hollow_demo_final.html`；这些文件来自本地确定性工具链，不代表新的 AGH 现场运行证据。
 
+主目录的`report.html`由本地确定性工具重新生成，覆盖初始约束失败、候选搜索、最终复算、敏感性、公差和公开工程参考对照。修改工具或数据后，可在项目根目录运行`python scripts/generate_demo_report.py`复现报告；报告默认只包含计算工具实际返回的限值，不会为缺失约束编造裕度图。AGH 中的`generate_design_dossier`返回 HTML 内容，不负责将内容写入用户磁盘；保存成文件须使用 AGH 提供的附件/导出能力，或将返回内容写入 UTF-8 `.html` 文件。
+
 不要提交API密钥、AGH本地状态、Python虚拟环境、缓存或未经脱敏的个人信息。
 
-发布包不包含项目虚拟环境。运行插件前请只在当前 AGH 启动终端设置项目专用解释器，例如：
+发布包不包含项目虚拟环境，但 `agh-plugin/tools/` 会包含运行所需的团队 Python 脚本。目标电脑须安装 AGH 和 Python 3.10 或更新版本；工具只依赖 Python 标准库。插件默认使用可找到的系统 Python；如未加入 `PATH`，仅在启动 AGH 的终端设置解释器路径：
 
 ```powershell
-$env:PYTHON_EXEC = 'F:\hackathon\黑客松\mechanical-agent\.venv\Scripts\python.exe'
+$env:PYTHON_EXEC = 'C:\完整路径\到\python.exe'
 ```
 
-这不会修改或升级任何全局 Python 环境。
+安装插件时应选择解压后发布包内完整的 `agh-plugin/` 文件夹，不能只复制 `index.mjs`。更换电脑后的 AGH 安装、信任、启用和工具调用仍需在目标环境实测，不能仅凭本机测试认定兼容。
 
 ## 报告工具的公开参考字段
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import sys
 from typing import Any
 
@@ -96,11 +97,28 @@ def _structured_value(
     *,
     required: bool = False,
 ) -> Any:
-    """Read a native AGH object/array, with a legacy JSON-string fallback."""
+    """Read a native AGH value, tolerating one strict-JSON boundary encoding.
+
+    AGH normally passes object/array fields as native values. Some older
+    sessions and adapters serialize those fields once before invoking the
+    plugin, so a native field can arrive as a JSON string. Decode only strict
+    JSON here; Python ``str(dict)`` syntax is intentionally rejected. The
+    explicit ``*_json`` field remains the legacy fallback when the native key
+    is absent. If both keys are present, the native key wins deterministically.
+    """
     if structured_key in payload:
         value = payload[structured_key]
         if value is None and required:
             raise InputError(f"{structured_key}不能为空")
+        if isinstance(value, str):
+            if not value.strip():
+                if required:
+                    raise InputError(f"{structured_key}不能为空")
+                return None
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise InputError(f"{structured_key}必须是对象/数组或严格JSON字符串: {exc.msg}") from exc
         return value
     return _json_value(payload, legacy_key, required=required)
 
@@ -273,6 +291,110 @@ def _metric_rows(calc: dict[str, Any]) -> list[tuple[str, str]]:
     return rows
 
 
+def _constraint_visual_html(calc: dict[str, Any]) -> str:
+    constraints = calc.get("constraints")
+    labels = {
+        "deflection": ("挠度", "upper"),
+        "mass": ("质量", "upper"),
+        "safety_factor": ("屈服安全系数", "lower"),
+        "local_buckling": ("局部屈曲筛查系数", "lower"),
+    }
+    rows = []
+    if isinstance(constraints, dict):
+        for name, item in constraints.items():
+            if name not in labels or not isinstance(item, dict):
+                continue
+            actual = item.get("actual")
+            limit = item.get("limit")
+            passed = item.get("passed")
+            if (
+                isinstance(actual, bool)
+                or isinstance(limit, bool)
+                or not isinstance(actual, (int, float))
+                or not isinstance(limit, (int, float))
+                or not math.isfinite(actual)
+                or not math.isfinite(limit)
+                or limit <= 0
+                or not isinstance(passed, bool)
+            ):
+                continue
+            direction = labels[name][1]
+            if direction == "upper":
+                utilization = actual / limit
+                ratio_label = "限值使用率"
+            else:
+                utilization = limit / actual if actual > 0 else math.inf
+                ratio_label = "要求/实际"
+            if not math.isfinite(utilization):
+                continue
+            width = min(100.0, max(0.0, utilization * 100.0))
+            state = "满足" if passed else "未满足"
+            color = "#18794e" if passed else "#b42318"
+            rows.append(
+                "<div class=\"constraint-row\">"
+                f"<div class=\"constraint-heading\"><strong>{html.escape(labels[name][0])}</strong>"
+                f"<span>{ratio_label} {html.escape(_fmt(utilization * 100.0))}% · {state}</span></div>"
+                f"<div class=\"constraint-track\" role=\"img\" aria-label=\"{html.escape(labels[name][0])}，{ratio_label} {html.escape(_fmt(utilization * 100.0))}%，{state}\">"
+                f"<span style=\"width:{width:.3f}%;background:{color}\"></span></div>"
+                f"<small>实际值：{html.escape(_fmt(actual))}；限值：{html.escape(_fmt(limit))}</small>"
+                "</div>"
+            )
+    if not rows:
+        return '<p class="muted">未提供可绘制的数值约束；本报告不推测缺失限值。</p>'
+    return '<div class="constraint-chart">' + "".join(rows) + "</div>"
+
+
+def _trace_html(trace: Any) -> str:
+    if not isinstance(trace, list) or not trace:
+        return f"<p>{html.escape(_fmt(_localized_trace(trace)))}</p>" if trace else "<p>未提供重规划轨迹。</p>"
+
+    labels = {
+        "result_status": "结果状态",
+        "failed_constraints": "失败约束",
+        "failure_code": "错误码",
+        "failure_message": "错误信息",
+        "decision": "决策说明",
+        "combinations_considered": "候选组合数",
+        "candidates_evaluated": "已评估候选数",
+        "invalid_geometry_count": "非法几何数",
+        "feasible_count": "可行候选数",
+        "objective": "排序目标",
+        "selected_dimensions": "选定尺寸",
+        "perturbation_percent": "扰动幅度",
+        "dominant_parameters": "主导参数",
+        "cases_evaluated": "公差工况数",
+        "passed_cases": "通过工况数",
+        "invalid_geometry_cases": "非法几何工况数",
+    }
+    localized = _localized_trace(trace)
+    steps = []
+    for index, event in enumerate(localized, start=1):
+        if not isinstance(event, dict):
+            steps.append(f"<li><code>{html.escape(_fmt(event))}</code></li>")
+            continue
+        step = html.escape(_fmt(event.get("step", index)))
+        stage = event.get("stage", event.get("event", "过程记录"))
+        rows = []
+        for key, value in event.items():
+            if key in {"step", "stage", "event"}:
+                continue
+            label = html.escape(labels.get(key, key))
+            if isinstance(value, dict):
+                nested = "".join(
+                    f"<li><strong>{html.escape(str(subkey))}：</strong><code>{html.escape(_fmt(subvalue))}</code></li>"
+                    for subkey, subvalue in value.items()
+                )
+                rendered = f"<ul>{nested}</ul>"
+            else:
+                rendered = f"<code>{html.escape(_fmt(value))}</code>"
+            rows.append(f"<dt>{label}</dt><dd>{rendered}</dd>")
+        steps.append(
+            f"<li><h3>步骤 {step}：{html.escape(_fmt(stage))}</h3>"
+            f"<dl>{''.join(rows)}</dl></li>"
+        )
+    return '<ol class="trace-list">' + "".join(steps) + "</ol>"
+
+
 def _stability_summary(calc: dict[str, Any]) -> list[str]:
     if not _is_hollow(calc):
         return []
@@ -421,7 +543,7 @@ def _markdown(payload: dict[str, Any], results: dict[str, Any]) -> str:
     geometry_rows = _geometry_rows(calc)
     metric_rows = _metric_rows(calc)
     tolerance_invalid = tolerance.get("invalid_geometry_cases") if tolerance else None
-    public_heading = 9 if public_reference else 0
+    public_heading = 10 if public_reference else 0
     data_heading = public_heading + 1 if public_heading else 9
     lines = [
         f"# {project_name}",
@@ -507,6 +629,7 @@ def _html_report(payload: dict[str, Any], results: dict[str, Any]) -> str:
     geometry_rows = _geometry_rows(calc)
     metric_rows_data = _metric_rows(calc)
     stability = calc.get("stability_screening") if _is_hollow(calc) else None
+    constraint_visual = _constraint_visual_html(calc)
     tolerance_invalid = tolerance.get("invalid_geometry_cases") if tolerance else None
     public_heading = 9 if public_reference else 0
     data_heading = public_heading + 1 if public_heading else 9
@@ -548,7 +671,7 @@ def _html_report(payload: dict[str, Any], results: dict[str, Any]) -> str:
             ("公差非法几何数", _fmt(tolerance_invalid if tolerance_invalid is not None else "未提供")),
         )
     )
-    trace_html = f"<code>{cell(_fmt(_localized_trace(trace)))}</code>" if trace else "<p>未提供重规划轨迹。</p>"
+    trace_html = _trace_html(trace)
     return f'''<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -563,6 +686,19 @@ def _html_report(payload: dict[str, Any], results: dict[str, Any]) -> str:
     th {{ background: #f3f4f6; width: 35%; }}
     code {{ white-space: pre-wrap; word-break: break-word; }}
     .status {{ font-weight: 600; }}
+    .constraint-chart {{ display: grid; gap: .85rem; margin: 1rem 0 1.5rem; max-width: 720px; }}
+    .constraint-heading {{ display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }}
+    .constraint-heading span, .constraint-row small, .muted {{ color: #586174; }}
+    .constraint-track {{ height: 12px; margin: .35rem 0; border-radius: 2px; background: #e7eaf0; overflow: hidden; }}
+    .constraint-track span {{ display: block; height: 100%; border-radius: 2px; }}
+    .trace-list {{ display: grid; gap: 1rem; padding-left: 1.5rem; }}
+    .trace-list li {{ padding: .25rem 0; }}
+    .trace-list h3 {{ font-size: 1rem; margin: 0 0 .4rem; }}
+    .trace-list dl {{ display: grid; grid-template-columns: minmax(9rem, 1fr) 3fr; gap: .3rem .75rem; margin: 0; }}
+    .trace-list dt {{ font-weight: 600; }}
+    .trace-list dd {{ margin: 0; overflow-wrap: anywhere; }}
+    .trace-list dd ul {{ margin: 0; padding-left: 1.25rem; }}
+    @media (max-width: 560px) {{ .trace-list dl {{ grid-template-columns: 1fr; gap: .15rem; }} }}
   </style>
 </head>
 <body>
@@ -579,18 +715,21 @@ def _html_report(payload: dict[str, Any], results: dict[str, Any]) -> str:
   <h2>3. 计算结果</h2>
   <table><tbody>{metric_rows}</tbody></table>
   {stability_html}
-  <h2>5. 约束与公差验证</h2>
+  <h2>5. 约束裕度概览</h2>
+  <p>上限约束显示实际值/限值，下限约束显示限值/实际值；条长封顶为 100%，精确数值同时列出。</p>
+  {constraint_visual}
+  <h2>6. 约束与公差验证</h2>
   <ul>{optional}</ul>
-  <h2>6. 失败与重规划轨迹</h2>
+  <h2>7. 失败与重规划轨迹</h2>
   {trace_html}
-  <h2>7. 证据和限制</h2>
+  <h2>8. 证据和限制</h2>
   <p>{note}</p>
   <ul>
     <li>本报告不代表真实实验或实物测试结果。</li>
     <li>公开材料参数只能作为工程参考数据。</li>
     {''.join(f'<li>{html.escape(item)}</li>' for item in _limitations(calc))}
   </ul>
-  <h2>8. 规范依据</h2>
+  <h2>9. 规范依据</h2>
   <ul>
     <li>{html.escape(STANDARD_REFERENCE)}</li>
     <li>本项目仅借用内部板件弹性屈曲系数与应力分布边界进行工程筛查，不声称完成 EN 1993-1-5 的完整材料设计验算。</li>
@@ -637,6 +776,7 @@ def generate(payload: dict[str, Any]) -> dict[str, Any]:
             "最终方案输入",
             "计算结果",
             *( ["局部屈曲筛查"] if _is_hollow(calculation) else [] ),
+            *( ["约束裕度概览"] if output_format == "html" else [] ),
             "约束与公差验证",
             "失败与重规划轨迹",
             "证据和限制",

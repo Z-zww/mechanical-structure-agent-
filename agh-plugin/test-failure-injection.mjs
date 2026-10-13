@@ -1,15 +1,19 @@
 import assert from 'node:assert/strict'
 import { cp, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { test } from 'node:test'
 
 const pluginSource = dirname(fileURLToPath(import.meta.url))
+const bundledPython = process.platform === 'win32'
+  ? join(pluginSource, '..', '.venv', 'Scripts', 'python.exe')
+  : join(pluginSource, '..', '.venv', 'bin', 'python')
 const pythonExecutable = process.env.PYTHON_EXEC || (
-  process.platform === 'win32'
-    ? join(pluginSource, '..', '.venv', 'Scripts', 'python.exe')
-    : join(pluginSource, '..', '.venv', 'bin', 'python')
+  existsSync(bundledPython)
+    ? bundledPython
+    : (process.platform === 'win32' ? 'python.exe' : 'python')
 )
 
 async function createScenario(source, layout = 'sibling') {

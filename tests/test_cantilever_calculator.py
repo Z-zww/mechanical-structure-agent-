@@ -68,6 +68,18 @@ class CantileverCalculatorTests(unittest.TestCase):
                 with self.assertRaises(InputError):
                     calculate(payload)
 
+    def test_nonfinite_derived_metrics_are_rejected(self):
+        with self.assertRaises(ArithmeticError):
+            calculate(
+                {
+                    "load_n": 1e308,
+                    "length_mm": 1e308,
+                    "width_mm": 1.0,
+                    "height_mm": 1.0,
+                    "material_id": "steel_s235",
+                }
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
