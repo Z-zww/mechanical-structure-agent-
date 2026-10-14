@@ -11,6 +11,7 @@
 7. 发布 ZIP 由构建脚本从 Git 已跟踪文件生成；未跟踪的第三方原始网页和 PDF 不进入发布包。
 8. 发布包插件目录内含 `tools/` 计算脚本；包不包含 AGH、Python 运行时、虚拟环境、密钥或 AGH 本地状态。
 9. 本机 AGH 插件已通过官方包管理事务更新、信任并启用；报告工具长中文载荷 HTML 回归通过。
+10. 已加入脱敏 AGH trace：`evidence/agh_trace_sanitized.jsonl`，并提供 `scripts/export_agh_trace.py` 供后续从 AGH 会话事件重新导出。
 
 ## 提交前人工核对
 
@@ -20,6 +21,7 @@
 4. 核对演示视频中只出现赛事指定 Agnes 模型和本项目确定性工具。
 5. 在另一台干净设备安装 AGH 与 Python 3.10+，验证解压、插件导入、信任、启用和端到端工具调用。
 6. 解压发布 ZIP 后再次运行 Python 和 Node 测试，并核对 ZIP 内无 `validation/sources/`、API key、`.venv/` 或 `agh-local-home/`。
+7. 确认提交包同时包含 `README.md`、`docs/可复现与AGH_trace说明.md`、`evidence/agh_trace_sanitized.jsonl` 和源码目录。
 
 ## 不应写入提交材料的内容
 

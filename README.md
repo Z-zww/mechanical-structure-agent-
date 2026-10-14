@@ -55,6 +55,8 @@
 - `cases/`：版本化的确定性输入案例
 - `evidence/`：脱敏后的AGH执行记录、结果和验证证据
 
+评审要求的可复现执行证据见 `evidence/agh_trace_sanitized.jsonl`，导出方法和脱敏边界见 `docs/可复现与AGH_trace说明.md`。该 trace 来自一次实际 AGH 会话的事件记录，保留工具调用顺序、失败反馈、重规划后的结果和报告生成修正过程，不包含原始会话数据库、个人路径、提示词或密钥。
+
 本地空心演示案例位于`cases/hollow_demo_cases.json`，完整闭环的中文 HTML 演示报告位于`cases/hollow_demo_final.html`；这些文件来自本地确定性工具链，不代表新的 AGH 现场运行证据。
 
 主目录的`report.html`由本地确定性工具重新生成，覆盖初始约束失败、候选搜索、最终复算、敏感性、公差和公开工程参考对照。修改工具或数据后，可在项目根目录运行`python scripts/generate_demo_report.py`复现报告；报告默认只包含计算工具实际返回的限值，不会为缺失约束编造裕度图。AGH 中的`generate_design_dossier`返回 HTML 内容，不负责将内容写入用户磁盘；保存成文件须使用 AGH 提供的附件/导出能力，或将返回内容写入 UTF-8 `.html` 文件。
